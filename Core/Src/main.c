@@ -56,6 +56,13 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t run;
+
+//int fputc(int ch,FILE *f) //printf重定向到UART
+//{
+//	HAL_UART_Transmit(&huart1,(uint8_t *)&ch,1,0xFFFF);
+//	return ch;
+//}
+
 /* USER CODE END 0 */
 
 /**
@@ -65,7 +72,6 @@ uint8_t run;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint16_t pwm=0;
 
   /* USER CODE END 1 */
 
@@ -105,6 +111,7 @@ int main(void)
 	
 	
 	HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -135,6 +142,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 		HAL_Delay(10);
+
 	}
   /* USER CODE END 3 */
 }
@@ -181,58 +189,24 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) { 
 	uint8_t key;
+	unsigned char uartBuf[4]="TEST";
 	HAL_Delay(10);
 	key=HAL_GPIO_ReadPin(KEY1_GPIO_Port,KEY1_Pin);
 	if(key==0) {
-//			HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin,GPIO_PIN_SET);
-			HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_SET);
-			HAL_Delay(200);
-			HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET);
-			HAL_GPIO_WritePin(LED5_GPIO_Port,LED5_Pin,GPIO_PIN_SET);
-			HAL_Delay(200);
-			HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET);
-			HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin,GPIO_PIN_SET);
-			HAL_Delay(200);
-			HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
-			HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin,GPIO_PIN_SET);
-			HAL_Delay(200);
-			HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin,GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LED5_GPIO_Port,LED5_Pin,GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin,GPIO_PIN_RESET);
-			HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin,GPIO_PIN_RESET);
-			HAL_Delay(200);
-			HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
-			HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-			HAL_Delay(500);
-			HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
-//HAL_TIM_PWM_Start(&htim4,TIM_CHANNEL_1);
-//HAL_TIM_PWM_Stop(&htim4,TIM_CHANNEL_2);
-
-			
+		if (run==0) run=1;
+		else if(run==1) run=0;
 	}
-		key=HAL_GPIO_ReadPin(KEY2_GPIO_Port,KEY2_Pin);
-		if (key==0){
-			run=1;
-//			HAL_GPIO_WritePin(PWM1_GPIO_Port,PWM1_Pin,GPIO_PIN_SET);
-//			HAL_GPIO_WritePin(PWM3_GPIO_Port,PWM3_Pin,GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(PWM2_GPIO_Port,PWM2_Pin,GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(PWM4_GPIO_Port,PWM4_Pin,GPIO_PIN_SET);
+	key=HAL_GPIO_ReadPin(KEY2_GPIO_Port,KEY2_Pin);
+	if (key==0){
+	HAL_UART_Transmit(&huart1,uartBuf,4,0xffff);
+//		printf("Hello World");
+	}
+	key=HAL_GPIO_ReadPin(KEY3_GPIO_Port,KEY3_Pin);
+	if (key==0){
+
+
 		}
-		key=HAL_GPIO_ReadPin(KEY3_GPIO_Port,KEY3_Pin);
-		if (key==0){
-			run=0;
-//			HAL_GPIO_WritePin(PWM1_GPIO_Port,PWM1_Pin,GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(PWM3_GPIO_Port,PWM3_Pin,GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(PWM2_GPIO_Port,PWM2_Pin,GPIO_PIN_RESET);
-//			HAL_GPIO_WritePin(PWM4_GPIO_Port,PWM4_Pin,GPIO_PIN_RESET);
-		}
-			
-		
-	
+
 }
 /* USER CODE END 4 */
 
