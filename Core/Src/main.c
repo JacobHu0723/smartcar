@@ -90,108 +90,51 @@ int main(void)
   MX_TIM1_Init();
   MX_USART1_UART_Init();
   MX_TIM4_Init();
-  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-	uint8_t l_line;
-	uint8_t r_line;
-	HAL_TIM_Base_Start_IT(&htim1);
-	HAL_TIM_Base_Start_IT(&htim4);
+	uint8_t l_line;			//左线标志
+	uint8_t r_line;			//右线标志
+//	HAL_TIM_Base_Start_IT(&htim1);
+//	HAL_TIM_Base_Start_IT(&htim4);
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,10);
-	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,90);
+	/* 对小车电机状态初始化 */
+	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,50);
+	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,50);
+	HAL_GPIO_WritePin(PWM1_GPIO_Port,PWM1_Pin,GPIO_PIN_SET);
+	HAL_GPIO_WritePin(PWM4_GPIO_Port,PWM4_Pin,GPIO_PIN_SET);
 	
-  HAL_Delay(1000);
-	HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET);
-//	HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED5_GPIO_Port,LED5_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin,GPIO_PIN_RESET);
-	HAL_Delay(500);
-//	HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_SET);
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LED5_GPIO_Port,LED5_Pin,GPIO_PIN_SET);
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin,GPIO_PIN_SET);
-	HAL_Delay(100);
+	
 	HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin,GPIO_PIN_SET);
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET);
-//	HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED5_GPIO_Port,LED5_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin,GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin,GPIO_PIN_RESET);
-	HAL_Delay(100);
-	HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
-	
-	
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		HAL_Delay(10);
 		if (run==1){
 			l_line=HAL_GPIO_ReadPin(IRED1_GPIO_Port,IRED1_Pin);
 			r_line=HAL_GPIO_ReadPin(IRED2_GPIO_Port,IRED2_Pin);
 			if (l_line==1 && r_line==0){  //左转
-				HAL_GPIO_WritePin(PWM1_GPIO_Port,PWM1_Pin,GPIO_PIN_RESET);
-//				HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-//				HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-				HAL_GPIO_WritePin(PWM4_GPIO_Port,PWM4_Pin,GPIO_PIN_SET);
-				
-				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET);
-				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET);
+				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,50);
+				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,40);
 			}
 			if (l_line==0 && r_line==1){  //右转
-				HAL_GPIO_WritePin(PWM1_GPIO_Port,PWM1_Pin,GPIO_PIN_SET);
-//				HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-//				HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-				HAL_GPIO_WritePin(PWM4_GPIO_Port,PWM4_Pin,GPIO_PIN_RESET);
-				
-				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET);
+				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,40);
+				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,50);
 			}
 			if (l_line==0 && r_line==0){  //前进
-				HAL_GPIO_WritePin(PWM1_GPIO_Port,PWM1_Pin,GPIO_PIN_SET);
-//				HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-//				HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-				HAL_GPIO_WritePin(PWM4_GPIO_Port,PWM4_Pin,GPIO_PIN_SET);
-				
-				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_RESET);
-				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET);
+				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,40);
+				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,40);
 			}
 			if (l_line==1 && r_line==1){  //停止
-				HAL_GPIO_WritePin(PWM1_GPIO_Port,PWM1_Pin,GPIO_PIN_RESET);
-//				HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-//				HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-				HAL_GPIO_WritePin(PWM4_GPIO_Port,PWM4_Pin,GPIO_PIN_RESET);
-				
-				HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET);
-				HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_SET);
+				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,50);
+				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,50);
 			}
-		HAL_Delay(100);
-		__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,pwm);
-		__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,pwm);
-		__HAL_TIM_SetCompare(&htim3, TIM_CHANNEL_2,pwm);
-		pwm=(pwm+5);
 		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
+		HAL_Delay(10);
 	}
   /* USER CODE END 3 */
 }
