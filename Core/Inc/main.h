@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stdio.h"
+//#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -88,6 +88,14 @@ void Error_Handler(void);
 #define LED7_GPIO_Port GPIOB
 #define BEEP_Pin GPIO_PIN_8
 #define BEEP_GPIO_Port GPIOA
+#define E1A_Pin GPIO_PIN_15
+#define E1A_GPIO_Port GPIOA
+#define E1B_Pin GPIO_PIN_3
+#define E1B_GPIO_Port GPIOB
+#define E2A_Pin GPIO_PIN_4
+#define E2A_GPIO_Port GPIOB
+#define E2B_Pin GPIO_PIN_5
+#define E2B_GPIO_Port GPIOB
 #define PWM1_Pin GPIO_PIN_6
 #define PWM1_GPIO_Port GPIOB
 #define PWM2_Pin GPIO_PIN_7

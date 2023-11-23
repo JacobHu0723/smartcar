@@ -24,6 +24,18 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stdio.h"
+#ifdef __GNUC__
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif
+PUTCHAR_PROTOTYPE
+{
+    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
+
+    return ch;
+}
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,11 +69,11 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 uint8_t run;
 
-//int fputc(int ch,FILE *f) //printf重定向到UART
-//{
-//	HAL_UART_Transmit(&huart1,(uint8_t *)&ch,1,0xFFFF);
-//	return ch;
-//}
+int fputc(int ch,FILE *f) //printf重定向到UART
+{
+	HAL_UART_Transmit(&huart1,(uint8_t *)&ch,1,50);
+	return ch;
+}
 
 /* USER CODE END 0 */
 
@@ -96,6 +108,8 @@ int main(void)
   MX_TIM1_Init();
   MX_USART1_UART_Init();
   MX_TIM4_Init();
+  MX_TIM2_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 	uint8_t l_line;			//左线标志
 	uint8_t r_line;			//右线标志
@@ -103,6 +117,16 @@ int main(void)
 //	HAL_TIM_Base_Start_IT(&htim4);
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+	
+	/*启动TIM编码器模式*/
+	HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(&htim3,TIM_CHANNEL_ALL);
+	__HAL_TIM_SET_COUNTER(&htim2, 30000);
+	__HAL_TIM_SET_COUNTER(&htim3, 30000);
+
+	HAL_TIM_Base_Start_IT(&htim2);
+	HAL_TIM_Base_Start_IT(&htim3);
+	
 	/* 对小车电机状态初始化 */
 	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,50);
 	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,50);
@@ -189,7 +213,15 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) { 
 	uint8_t key;
-	unsigned char uartBuf[4]="TEST";
+	
+//	const volatile uint32_t * uartBuf[1];
+//	uartBuf[0] = __HAL_TIM_GET_COUNTER(&htim2);
+
+//	uint16_t EncoderNum_l = __HAL_TIM_GET_COUNTER(&htim2);
+//	uint16_t EncoderNum_r = __HAL_TIM_GET_COUNTER(&htim3);
+//	
+//	uartBuf[4]={EncoderNum_l+EncoderNum_r};
+	
 	HAL_Delay(10);
 	key=HAL_GPIO_ReadPin(KEY1_GPIO_Port,KEY1_Pin);
 	if(key==0) {
@@ -198,8 +230,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	}
 	key=HAL_GPIO_ReadPin(KEY2_GPIO_Port,KEY2_Pin);
 	if (key==0){
-	HAL_UART_Transmit(&huart1,uartBuf,4,0xffff);
+//	HAL_UART_Transmit(&huart1,uartBuf,4,0xffff);
+		
 //		printf("Hello World");
+		printf("cnt=%d\n",run);
+		HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
 	}
 	key=HAL_GPIO_ReadPin(KEY3_GPIO_Port,KEY3_Pin);
 	if (key==0){
