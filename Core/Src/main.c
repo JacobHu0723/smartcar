@@ -18,24 +18,18 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "app.h"
 #include "stdio.h"
-#ifdef __GNUC__
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
-#else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
-#endif
-PUTCHAR_PROTOTYPE
-{
-    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 0xFFFF);
+#include "string.h"
+#include "oled.h"
 
-    return ch;
-}
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,24 +50,20 @@ PUTCHAR_PROTOTYPE
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+extern uint8_t buf1[200];
+extern uint8_t buf1_cnt;
+extern uint8_t Buffer1;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t run;
-
-int fputc(int ch,FILE *f) //printf重定向到UART
-{
-	HAL_UART_Transmit(&huart1,(uint8_t *)&ch,1,50);
-	return ch;
-}
 
 /* USER CODE END 0 */
 
@@ -105,69 +95,80 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM1_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
+  MX_TIM1_Init();
   MX_TIM4_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
-  /* USER CODE BEGIN 2 */
-	uint8_t l_line;			//左线标志
-	uint8_t r_line;			//右线标志
-//	HAL_TIM_Base_Start_IT(&htim1);
-//	HAL_TIM_Base_Start_IT(&htim4);
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-	
-	/*启动TIM编码器模式*/
-	HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
-	HAL_TIM_Encoder_Start(&htim3,TIM_CHANNEL_ALL);
-	__HAL_TIM_SET_COUNTER(&htim2, 30000);
-	__HAL_TIM_SET_COUNTER(&htim3, 30000);
 
-	HAL_TIM_Base_Start_IT(&htim2);
-	HAL_TIM_Base_Start_IT(&htim3);
-	
-	/* 对小车电机状态初始化 */
-	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,50);
-	__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,50);
-	HAL_GPIO_WritePin(PWM1_GPIO_Port,PWM1_Pin,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(PWM4_GPIO_Port,PWM4_Pin,GPIO_PIN_SET);
-	
-	
-	HAL_GPIO_WritePin(LED0_GPIO_Port,LED0_Pin,GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_SET);
+  /* Initialize interrupts */
+  MX_NVIC_Init();
+  /* USER CODE BEGIN 2 */
+  HAL_Delay(500);
+  LED1_OFF();
+  LED2_OFF();
+  LED3_OFF();
+  LED4_OFF();
+  LED5_OFF();
+  LED6_OFF();
+  LED7_OFF();  
+  HAL_UART_Receive_IT(&huart1, &Buffer1, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-		if (run==1){
-			l_line=HAL_GPIO_ReadPin(IRED1_GPIO_Port,IRED1_Pin);
-			r_line=HAL_GPIO_ReadPin(IRED2_GPIO_Port,IRED2_Pin);
-			if (l_line==1 && r_line==0){  //左转
-				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,50);
-				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,40);
-			}
-			if (l_line==0 && r_line==1){  //右转
-				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,40);
-				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,50);
-			}
-			if (l_line==0 && r_line==0){  //前进
-				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,40);
-				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,40);
-			}
-			if (l_line==1 && r_line==1){  //停止
-				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_2,50);
-				__HAL_TIM_SetCompare(&htim4, TIM_CHANNEL_3,50);
-			}
+HAL_TIM_Encoder_Start(&htim2,TIM_CHANNEL_ALL);
+HAL_TIM_Encoder_Start(&htim3,TIM_CHANNEL_ALL);
+
+HAL_TIM_Base_Start_IT(&htim2);
+HAL_TIM_Base_Start_IT(&htim3);
+
+HAL_TIM_Base_Start(&htim4);
+HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_4);
+	{	char str[100];		
+		sprintf(str,"Hand restarted,in ");	
+		u1dma_sendstr(str);	
+	  HAL_Delay(500);
+
+	OLED_Init();
+  OLED_Clear();
+
+		
 		}
+  while (1)
+  {  static uint32_t sec_interval=0;
+		
+		if(buf1_cnt)
+		{  static uint8_t old_cnt1=0;
+			HAL_Delay(5);
+			if(old_cnt1==buf1_cnt)    //新周期内,没有收到任何数据,认为本次数据接收完成.
+			{					
+				buf1_cnt=0;
+				deal_u1dat(buf1,old_cnt1);				
+				old_cnt1=0;
+			}
+		  else
+			{
+				old_cnt1=buf1_cnt;
+			}
+		}	
+		
+		
+		if(HAL_GetTick()-sec_interval>1000)   //1s间隔，用作上传状态	
+		{
+			sec_interval=HAL_GetTick();
+			sec_dealtask();			
+		}
+		
+		
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		HAL_Delay(10);
-
-	}
+  }
   /* USER CODE END 3 */
 }
 
@@ -201,7 +202,7 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
@@ -210,39 +211,22 @@ void SystemClock_Config(void)
   }
 }
 
-/* USER CODE BEGIN 4 */
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) { 
-	uint8_t key;
-	
-//	const volatile uint32_t * uartBuf[1];
-//	uartBuf[0] = __HAL_TIM_GET_COUNTER(&htim2);
-
-//	uint16_t EncoderNum_l = __HAL_TIM_GET_COUNTER(&htim2);
-//	uint16_t EncoderNum_r = __HAL_TIM_GET_COUNTER(&htim3);
-//	
-//	uartBuf[4]={EncoderNum_l+EncoderNum_r};
-	
-	HAL_Delay(10);
-	key=HAL_GPIO_ReadPin(KEY1_GPIO_Port,KEY1_Pin);
-	if(key==0) {
-		if (run==0) run=1;
-		else if(run==1) run=0;
-	}
-	key=HAL_GPIO_ReadPin(KEY2_GPIO_Port,KEY2_Pin);
-	if (key==0){
-//	HAL_UART_Transmit(&huart1,uartBuf,4,0xffff);
-		
-//		printf("Hello World");
-		printf("cnt=%d\n",run);
-		HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
-	}
-	key=HAL_GPIO_ReadPin(KEY3_GPIO_Port,KEY3_Pin);
-	if (key==0){
-
-
-		}
-
+/**
+  * @brief NVIC Configuration.
+  * @retval None
+  */
+static void MX_NVIC_Init(void)
+{
+  /* DMA1_Channel4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+  /* USART1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(USART1_IRQn, 7, 0);
+  HAL_NVIC_EnableIRQ(USART1_IRQn);
 }
+
+/* USER CODE BEGIN 4 */
+
 /* USER CODE END 4 */
 
 /**
