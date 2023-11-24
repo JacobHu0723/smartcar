@@ -114,7 +114,7 @@ void brakes(void)
 } 
 //==========================================================
 //	函数名称：	turn_left   
-//	函数功能：	右电机减速，小车左转
+//	函数功能：	左电机减速，小车左转
 //	入口参数：  给定偏航度
 //	返回参数：	无    
 //========================================================== 
@@ -123,15 +123,15 @@ void turn_left(uint8_t yaw )
 	if(flag_move)
 	{
 	yaw=yaw+1;
-	R_Mot_speed=set_speed/yaw;   
-	L_Mot_speed=set_speed*(yaw/2);
+	L_Mot_speed=set_speed/yaw;   
+	R_Mot_speed=set_speed*(yaw/2);
 //	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, pwm4/yaw);	
 //	pm4=pwm4;
 	}
 }
 //==========================================================
 //	函数名称：	turn_right   
-//	函数功能：	左电机减速，小车右转
+//	函数功能：	右电机减速，小车右转
 //	入口参数：  给定偏航度
 //	返回参数：	无    
 //========================================================== 
@@ -140,8 +140,8 @@ void turn_right(uint8_t yaw )
 	if(flag_move)
 	{
 	yaw=yaw+1;
-	L_Mot_speed=set_speed/yaw; 
-	R_Mot_speed=set_speed*(yaw/2);		
+	R_Mot_speed=set_speed/yaw; 
+	L_Mot_speed=set_speed*(yaw/2);		
 //	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pwm1/yaw);	
 //		pm1=pwm1;
 	}
