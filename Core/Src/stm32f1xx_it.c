@@ -42,7 +42,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern uint8_t pre;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -189,7 +189,7 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 static uint8_t ctrlpri=0;
 	ctrlpri++;
-	if(ctrlpri==9)
+	if(ctrlpri==pre)
 	{
 		ctrlpri=0;
 		ctrdeal();		

@@ -19,6 +19,7 @@ volatile uint8_t flag_move=0;   //  0, stop    1,move
 volatile int8_t  flag_yaw=0;   //偏航标志位 ，参考图片
 volatile int8_t  flag_yaw_last=0;  //  偏航标志位的上一个值
 volatile uint8_t flag_IRED=0;     //四个前置红外传感器
+volatile uint8_t  pre=10;
 uint16_t pwm1=0,pwm2=0,pwm3=0,pwm4=0;  // pwm1>0,pwm2=0 左轮前进，pwm3=0,pwm4>0 右轮前进
 uint16_t pm1=0,pm2=0,pm3=0,pm4=0;   // 记录设定值，用于上传实时值
 int16_t EnML_cnt,EnMR_cnt;     // 左  右轮速度反馈
@@ -119,14 +120,25 @@ void brakes(void)
 //	返回参数：	无    
 //========================================================== 
 void turn_left(uint8_t yaw )
-{  
+{  float sx;
 	if(flag_move)
 	{
-	yaw=yaw+1;
-	L_Mot_speed=set_speed/yaw;   
-	R_Mot_speed=set_speed*(yaw/2);
-//	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_4, pwm4/yaw);	
-//	pm4=pwm4;
+		switch(yaw)
+		{
+			case 1:
+				sx=0.88;
+			break;
+			case 2:
+				sx=0.78;
+			break;
+			case 3:
+				sx=0.68;
+			break;
+			
+		}	
+	L_Mot_speed=set_speed/sx;   
+	R_Mot_speed=set_speed*sx;
+	HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin,GPIO_PIN_SET);
 	}
 }
 //==========================================================
@@ -136,14 +148,25 @@ void turn_left(uint8_t yaw )
 //	返回参数：	无    
 //========================================================== 
 void turn_right(uint8_t yaw )
-{
+{  float sx;
 	if(flag_move)
 	{
-	yaw=yaw+1;
-	R_Mot_speed=set_speed/yaw; 
-	L_Mot_speed=set_speed*(yaw/2);		
-//	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, pwm1/yaw);	
-//		pm1=pwm1;
+		switch(yaw)
+		{
+			case 1:
+				sx=0.88;
+			break;
+			case 2:
+				sx=0.78;
+			break;
+			case 3:
+				sx=0.68;
+			break;
+			
+		}	
+	R_Mot_speed=set_speed/sx;   
+	L_Mot_speed=set_speed*sx;
+	HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin,GPIO_PIN_SET);
 	}
 }
 //==========================================================
@@ -154,10 +177,19 @@ void turn_right(uint8_t yaw )
 //========================================================== 
 void	ctrdeal(void)   // 10ms进来一次
 {  
+	uint8_t spd;
 		EnML_cnt=-__HAL_TIM_GetCounter(&htim2);
 		EnMR_cnt=__HAL_TIM_GetCounter(&htim3);
 	__HAL_TIM_SET_COUNTER(&htim2,0);
 	__HAL_TIM_SET_COUNTER(&htim3,0);
+		
+	spd=(int)(set_speed/10);
+	pre=10-spd;
+	if(spd<=2) pre=9;
+	if(spd>=9) pre=2;
+	
+	EnML_cnt=EnML_cnt*10/pre;
+	EnMR_cnt=EnMR_cnt*10/pre;
 	 flag_IRED=(flag_IRED&0xf7)|(HAL_GPIO_ReadPin(IRED0_GPIO_Port,IRED0_Pin)<<3);  //  5  0101    1101  0110
 	 flag_IRED=(flag_IRED&0xfb)|(HAL_GPIO_ReadPin(IRED1_GPIO_Port,IRED1_Pin)<<2);
 	 flag_IRED=(flag_IRED&0xfd)|(HAL_GPIO_ReadPin(IRED2_GPIO_Port,IRED2_Pin)<<1);
@@ -174,9 +206,9 @@ void	ctrdeal(void)   // 10ms进来一次
 		else
 	 if(flag_yaw==0)   //  这个很关键，如果四个传感器未触发，根据上一个状态判断，防止出现循迹线在右或左两个传感器之间
 	 {
-		 if(flag_yaw_last==-3)
+		 if(flag_yaw_last==-3||flag_yaw_last==-2)
 			 flag_yaw=-2;
-		 if(flag_yaw_last==3)
+		 if(flag_yaw_last==3||flag_yaw_last==2)
 			 flag_yaw=2;		 
 	 
 		 switch(flag_yaw)
@@ -184,14 +216,21 @@ void	ctrdeal(void)   // 10ms进来一次
 			 case 0:
 				L_Mot_speed=set_speed;
 				R_Mot_speed=set_speed;
+			 HAL_GPIO_WritePin(LED6_GPIO_Port,LED6_Pin,GPIO_PIN_RESET);
+			 HAL_GPIO_WritePin(LED7_GPIO_Port,LED7_Pin,GPIO_PIN_RESET);
 			 break;
-			
-			 case -3:   // 左2被触发
+			case -2:   // 
 				turn_right(2);
 			 break;
-			
-			 case 3:  // 右2被触发
+			 case -3:   // 左2被触发
+				turn_right(3);
+			 break;
+			 
+			 case 2:
 				turn_left(2);
+			 break;
+			 case 3:  // 右2被触发
+				turn_left(3);
 			 break;
 			 
 		 }
@@ -201,7 +240,7 @@ void	ctrdeal(void)   // 10ms进来一次
 	{ int16_t para_L,para_R;		
 		
 		para_L=PID_Calc_Left(EnML_cnt,L_Mot_speed);	       //左电机，计数得到增量式PID的增量数值 
-		para_R=PID_Calc_Right(EnMR_cnt,L_Mot_speed);	       //右电机，计数得到增量式PID的增量数值 
+		para_R=PID_Calc_Right(EnMR_cnt,R_Mot_speed);	       //右电机，计数得到增量式PID的增量数值 
 		if((para_L<-5)||(para_L>5))                        //不做 PID 调整，避免误差较小时频繁调节引起震荡。
 			{
 				pwm1 +=para_L;  
@@ -373,7 +412,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 				LED2_Toggle();
 				if(HAL_GPIO_ReadPin(LED2_GPIO_Port,LED2_Pin))
 				{
-					move(20);   // 运动
+					move(25);   // 运动
 				}
 				else
 				{
@@ -386,6 +425,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		  if(!HAL_GPIO_ReadPin(KEY3_GPIO_Port,KEY3_Pin))
 			{
 				LED3_Toggle();
+				flag_yaw_last=0;
+				flag_yaw=0;
 				if(HAL_GPIO_ReadPin(LED3_GPIO_Port,LED3_Pin))
 				{
 					
