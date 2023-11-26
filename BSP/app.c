@@ -126,13 +126,13 @@ void turn_left(uint8_t yaw )
 		switch(yaw)
 		{
 			case 1:
-				sx=0.88;
+				sx=0.878;
 			break;
 			case 2:
-				sx=0.78;
+				sx=0.7805;
 			break;
 			case 3:
-				sx=0.68;
+				sx=0.6805;
 			break;
 			
 		}	
@@ -157,10 +157,10 @@ void turn_right(uint8_t yaw )
 				sx=0.88;
 			break;
 			case 2:
-				sx=0.78;
+				sx=0.7805;
 			break;
 			case 3:
-				sx=0.68;
+				sx=0.6805;
 			break;
 			
 		}	
@@ -412,7 +412,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 				LED2_Toggle();
 				if(HAL_GPIO_ReadPin(LED2_GPIO_Port,LED2_Pin))
 				{
-					move(25);   // 运动
+					move(23);   // 运动
 				}
 				else
 				{
@@ -435,6 +435,11 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 				{
 					
 				}
+				HAL_TIM_PWM_Start(&htim1,TIM_CHANNEL_1);
+  				beep+=10;
+				 __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, beep);
+				HAL_Delay(100);
+				HAL_TIM_PWM_Stop(&htim1,TIM_CHANNEL_1);
 			}
 		break;
 		
